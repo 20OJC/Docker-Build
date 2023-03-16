@@ -1,0 +1,38 @@
+name: Release Temporal Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Commit sha"
+        required: true
+      tag:
+        description: "The tag for the new images"
+        required: true
+      latest:
+        type: boolean
+        description: "Also update latest tag"
+        required: true
+        default: false
+
+jobs:
+  retag-and-release:
+    name: "Re-tag and release images"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: 'src/go.mod'
+      - name: Copy images
+        env:
+          COMMIT: ${{ github.event.inputs.commit }}
+          TAG: ${{ github.event.inputs.tag }}
+          USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          IMAGES: server auto-setup admin-tools
+          SRC_REPO: temporaliotest
+          DST_REPO: temporalio
+          LATEST: ${{ github.event.inputs.latest }}
+        run: go run src/release_temporal/main.go
